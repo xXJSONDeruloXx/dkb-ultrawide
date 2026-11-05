@@ -1,0 +1,16 @@
+{
+  "title_id": "040074A01BF12000",
+  "build_id": "E25C90C1C136638885659FD55BF8A03B3403489D000000000000000000000000",
+  "ratio": 1.6,
+  "sha256": "c87616a0ccdebe3c17b4a1da0b9927807e32487ac4dc9b5b7564b192fac26fba",
+  "records": [
+    {
+      "offset": "0x158d404",
+      "bytes": "3fc41714"
+    },
+    {
+      "offset": "0x1b7e500",
+      "bytes": "0188552d4900261e2ac791526afca7723f010a6ba1000054a999995289f9a7722201271e02b000bdb83be817"
+    }
+  ]
+}
