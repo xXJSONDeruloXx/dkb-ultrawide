@@ -1,6 +1,7 @@
 # Donkey Kong Bananza ultrawide for Lichii
 
-**Experimental. The patch loads in Lichii; gameplay and visual correctness still need validation.**
+**Experimental. Genuine horizontal view expansion is verified at 3440x1440 in Ingot Isle.
+HUDs and other 2D layouts still stretch.**
 
 This is a small ExeFS IPS32 patch, plus a Python generator for custom aspect ratios.
 It changes the horizontal perspective of cameras using the game's original 16:9
@@ -51,7 +52,7 @@ python dkb_ultrawide.py --game "D:\path\game.nup" --ratio 32:9 --output presets/
 Add `--install` to copy the generated patch into Lichii's default Windows mod
 directory. The command requires a matching NUP or an extracted `--nso main`
 before installation. It checks the table checksum, executable checksum, NSO build
-ID, original hook instruction, and executable padding bounds. It does not edit
+ID, all three original hook instructions, and executable padding bounds. It does not edit
 emulator settings. Regenerating replaces only this mod's own patch file.
 
 Generation without game verification is available for reviewing patch bytes;
@@ -60,20 +61,36 @@ omit `--game`. Such output still applies only to the build listed above.
 ## Validation and limits
 
 - Lichii's log confirms the IPS patch is applied to `main`.
-- The game boots to its title screen and attract video with the patch enabled.
-- Twenty AArch64 executions check five target ratios, unchanged non-16:9
-  cameras, return addresses, preserved FOV input, and live registers.
-- **Not yet verified:** playable 3D framing, edge culling, HUD/text proportions,
-  menus, cutscenes, photo mode, screen-space effects, and 32:9 output.
-- This patch currently does not correct 2D layouts. HUDs and videos may stretch
-  with the emulator output. This is not yet a complete ultrawide presentation.
+- A fresh emulator process loads the installed patch and reaches gameplay.
+  The title screen and attract video also run.
+- Sixty AArch64 executions cover all three projection paths, five target ratios,
+  unchanged non-16:9 cameras, return addresses, all general registers, stack,
+  and condition flags.
+- A matched Ingot Isle comparison measured horizontal landmark scaling of
+  `0.743965` (expected `0.744186`) and vertical scaling of `1.000543`.
+  At the matching display ratio this preserves 3D proportions and reveals
+  **34.375% more horizontal scene coverage** than 16:9.
+- The first revision missed two compiler-inlined projection paths. The corrected
+  patch includes both; replace older copies of the mod.
+- **Known limitation:** HUD text/icons, videos, and other 2D layouts stretch.
+  World-space UI anchors may also need separate correction. Title and loading
+  backgrounds can expose clear-color strips beyond their original artwork.
+- **Not fully verified:** other layers, bosses, cutscenes, photo mode,
+  screen-space effects, and full 32:9 gameplay. Other ratios are generated and
+  instruction-tested but do not have the same visual validation as 3440x1440.
 - No emulator binary modification is required.
 
 Run validation with:
 
 ```powershell
-python -m pip install unicorn
+python -m pip install -r requirements-validation.txt
 python -m unittest discover -s tests -v
 ```
 
 See `docs/research.md` for the exact hook and current validation status.
+
+For a stationary-camera screenshot comparison:
+
+```powershell
+python tools/compare_views.py before.png after.png --aspect 2.388888889
+```

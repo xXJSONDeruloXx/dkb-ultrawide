@@ -1,0 +1,4 @@
+unicorn
+opencv-python-headless
+numpy
+Pillow

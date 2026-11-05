@@ -14,6 +14,17 @@ HOOK = 0x158D404
 CAVE = 0x1B7E500
 ORIGINAL = bytes.fromhex("0188552d")  # ldp s1, s2, [x0, #0xac]
 MOD_NAME = "DKB Ultrawide"
+# (instruction, trampoline, object register, tangent register, aspect register)
+# The compiler devirtualizes the same calculation at two gameplay call sites.
+HOOKS = [
+    (HOOK, CAVE, 0, 1, 2),
+    (0x82BB4, CAVE + 0x80, 19, 3, 4),
+    (0xB14D0, CAVE + 0x100, 0, 3, 4),
+]
+
+
+def original_load(base, tangent, aspect):
+    return 0x2D400000 | ((0xAC // 4) << 15) | (aspect << 10) | (base << 5) | tangent
 
 
 def ratio_value(text):
@@ -36,23 +47,31 @@ def branch(source, target):
 
 def patch_records(ratio):
     bits = struct.unpack("<I", struct.pack("<f", ratio))[0]
-    # Caller-saved x9/x10 and NZCV are not live across this leaf routine.
-    # Preserve w8 (the original routine keeps -1 there) and all floating registers
-    # except s2, the aspect argument. Leave non-16:9 perspective cameras alone.
-    words = [
-        0x2D558801,  # ldp s1, s2, [x0, #0xac]
-        0x1E260049,  # fmov w9, s2
-        0x5291C72A,  # mov w10, #0x8e39
-        0x72A7FC6A,  # movk w10, #0x3fe3, lsl #16 (16/9)
-        0x6B0A013F,  # cmp w9, w10
-        0x540000A1,  # b.ne cave+0x28 (local conditional branch)
-        0x52800009 | ((bits & 0xFFFF) << 5),
-        0x72A00009 | ((bits >> 16) << 5),
-        0x1E270122,  # fmov s2, w9
-        0xBD00B002,  # str s2, [x0, #0xb0], also used by frustum calculations
-    ]
-    body = struct.pack("<10I", *words) + branch(CAVE + 40, HOOK + 4)
-    return [(HOOK, branch(HOOK, CAVE)), (CAVE, body)]
+    records = []
+    for hook, cave, base, tangent, aspect in HOOKS:
+        # Preserve every scratch GPR and NZCV: the two inlined paths run inside
+        # larger functions. Only the originally loaded SIMD registers change.
+        words = [
+            0xA9BE2BE9,  # stp x9, x10, [sp, #-32]!
+            0xF9000BEB,  # str x11, [sp, #16]
+            0xD53B420B,  # mrs x11, nzcv
+            original_load(base, tangent, aspect),
+            0x1E260009 | (aspect << 5),  # fmov w9, sAspect
+            0x5291C72A,  # mov w10, #0x8e39
+            0x72A7FC6A,  # movk w10, #0x3fe3, lsl #16 (16/9)
+            0x6B0A013F,  # cmp w9, w10
+            0x540000A1,  # b.ne cave+0x34
+            0x52800009 | ((bits & 0xFFFF) << 5),
+            0x72A00009 | ((bits >> 16) << 5),
+            0x1E270120 | aspect,  # fmov sAspect, w9
+            0xBD00B000 | (base << 5) | aspect,  # str sAspect, [xBase,#0xb0]
+            0xD51B420B,  # msr nzcv, x11
+            0xF9400BEB,  # ldr x11, [sp, #16]
+            0xA8C22BE9,  # ldp x9, x10, [sp], #32
+        ]
+        body = struct.pack("<16I", *words) + branch(cave + 64, hook + 4)
+        records.extend([(hook, branch(hook, cave)), (cave, body)])
+    return records
 
 
 def ips32(records):
@@ -74,15 +93,18 @@ def verify_nso(nso):
     compressed = struct.unpack_from("<I", nso, 96)[0]
     if address != 0 or not HOOK + 4 <= size <= CAVE:
         raise ValueError("Unexpected text layout")
-    if CAVE + 44 > ((size + 4095) & ~4095):
+    if max(cave + 68 for _, cave, *_ in HOOKS) > ((size + 4095) & ~4095):
         raise ValueError("Code cave is outside executable page padding")
     if flags & 1:
         import lz4.block
         text = lz4.block.decompress(nso[offset:offset + compressed], uncompressed_size=size)
     else:
         text = nso[offset:offset + size]
-    if len(text) != size or text[HOOK:HOOK + 4] != ORIGINAL:
-        raise ValueError("Hook instruction does not match this build")
+    if len(text) != size:
+        raise ValueError("Text segment size mismatch")
+    for hook, _, base, tangent, aspect in HOOKS:
+        if text[hook:hook + 4] != struct.pack("<I", original_load(base, tangent, aspect)):
+            raise ValueError(f"Hook instruction at {hook:#x} does not match this build")
     return build
 
 

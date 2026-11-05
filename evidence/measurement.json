@@ -1,0 +1,22 @@
+{
+  "matches": 151,
+  "inliers": 98,
+  "affine": [
+    [
+      0.7439647365905706,
+      -0.0002875835509554871,
+      246.03367112484707
+    ],
+    [
+      0.00019882205054282657,
+      1.00054309736153,
+      -0.3416258242121422
+    ]
+  ],
+  "expected_x_scale": 0.7441860465116279,
+  "expected_y_scale": 1,
+  "added_horizontal_percent": 34.375,
+  "display_normalized_x_scale": 0.9997026147935794,
+  "display_normalized_y_scale": 1.00054309736153,
+  "relative_shape_error_percent": 0.08400263518552054
+}

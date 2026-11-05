@@ -2,7 +2,7 @@
   "title_id": "040074A01BF12000",
   "build_id": "E25C90C1C136638885659FD55BF8A03B3403489D000000000000000000000000",
   "ratio": 1.6,
-  "sha256": "c87616a0ccdebe3c17b4a1da0b9927807e32487ac4dc9b5b7564b192fac26fba",
+  "sha256": "ea904bb949c32715f8bf0f05d04748b2696ec727530193199690d7cbd684c4d6",
   "records": [
     {
       "offset": "0x158d404",
@@ -10,7 +10,23 @@
     },
     {
       "offset": "0x1b7e500",
-      "bytes": "0188552d4900261e2ac791526afca7723f010a6ba1000054a999995289f9a7722201271e02b000bdb83be817"
+      "bytes": "e92bbea9eb0b00f90b423bd50188552d4900261e2ac791526afca7723f010a6ba1000054a999995289f9a7722201271e02b000bd0b421bd5eb0b40f9e92bc2a8b23be817"
+    },
+    {
+      "offset": "0x82bb4",
+      "bytes": "73ee6b14"
+    },
+    {
+      "offset": "0x1b7e580",
+      "bytes": "e92bbea9eb0b00f90b423bd56392552d8900261e2ac791526afca7723f010a6ba1000054a999995289f9a7722401271e64b200bd0b421bd5eb0b40f9e92bc2a87e119417"
+    },
+    {
+      "offset": "0xb14d0",
+      "bytes": "4c346b14"
+    },
+    {
+      "offset": "0x1b7e600",
+      "bytes": "e92bbea9eb0b00f90b423bd50390552d8900261e2ac791526afca7723f010a6ba1000054a999995289f9a7722401271e04b000bd0b421bd5eb0b40f9e92bc2a8a5cb9417"
     }
   ]
 }
